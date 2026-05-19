@@ -426,11 +426,19 @@
     };
 
     const footerBtnWrap = document.querySelector('.footer-btn-wrap');
+    let finalSubmitted = false;
+
+    function updateFooterBtn() {
+        gotoFinalBtn.textContent = finalSubmitted ? '送信済み' : '最後の答えの送信';
+        gotoFinalBtn.disabled = finalSubmitted;
+        gotoFinalBtn.style.background = finalSubmitted ? '#aaa' : '';
+        gotoFinalBtn.style.cursor = finalSubmitted ? 'not-allowed' : '';
+    }
 
     function showOnly(screenKey) {
         Object.values(screens).forEach(s => s.style.display = 'none');
         screens[screenKey].style.display = 'block';
-        footerBtnWrap.style.display = screenKey === 'top' ? 'none' : 'flex';
+        footerBtnWrap.style.display = screenKey === 'finalQuestion' ? 'none' : 'flex';
     }
 
     const navInput       = document.getElementById('nav-input');
@@ -524,6 +532,7 @@
     }
 
     function showFinalQuestion() {
+        if (finalSubmitted) return;
         showOnly('finalQuestion');
         finalQInput.value = '';
         finalNameInput.value = '';
@@ -538,10 +547,13 @@
         const answer = finalQInput.value.trim();
         const name   = finalNameInput.value.trim();
         if (!answer || !name) return;
+
+        finalSubmitted = true;
         finalQInput.disabled = true;
         finalNameInput.disabled = true;
         finalQSubmit.disabled = true;
         sendDone.style.display = 'block';
+        updateFooterBtn();
 
         const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfyNGH222hnSBl6Lfj77Dx_o7vRzhgjdivnzSpO4W8N7BLdqg/formResponse';
         const body = new FormData();
@@ -578,6 +590,7 @@
     document.getElementById('final-back-btn').addEventListener('click', () => showOnly('quiz'));
 
 
+    updateFooterBtn();
     showOnly('top');
 </script>
 </body>
