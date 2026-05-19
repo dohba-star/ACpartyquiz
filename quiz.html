@@ -318,8 +318,18 @@
 <body>
 <div class="container">
 
-    <!-- トップ画面 -->
-    <div id="top-screen" class="top-screen">
+    <!-- 氏名入力画面 -->
+    <div id="name-screen" class="top-screen">
+        <div class="final-field" style="width:100%">
+            <label class="final-label">氏名</label>
+            <input type="text" class="answer-input" id="name-input" placeholder="氏名を入力してください" />
+        </div>
+        <button class="submit-btn" id="name-submit-btn" style="margin-top:16px">次へ</button>
+        <div class="nav-error" id="name-error"></div>
+    </div>
+
+    <!-- メニュー画面 -->
+    <div id="menu-screen" class="top-screen" style="display:none">
         <div class="top-label">問題番号を入力してください</div>
         <div class="question-nav">
             <label for="top-nav-input">第</label>
@@ -415,10 +425,12 @@
     }
 
     let currentIndex = 0;
+    let userName = '';
     const states = Array(questions.length).fill(null);
 
     const screens = {
-        top:           document.getElementById('top-screen'),
+        name:          document.getElementById('name-screen'),
+        menu:          document.getElementById('menu-screen'),
         quiz:          document.getElementById('quiz-screen'),
         secret:        document.getElementById('secret-screen'),
         final:         document.getElementById('final-screen'),
@@ -438,7 +450,7 @@
     function showOnly(screenKey) {
         Object.values(screens).forEach(s => s.style.display = 'none');
         screens[screenKey].style.display = 'block';
-        footerBtnWrap.style.display = screenKey === 'finalQuestion' ? 'none' : 'flex';
+        footerBtnWrap.style.display = (screenKey === 'name' || screenKey === 'finalQuestion') ? 'none' : 'flex';
     }
 
     const navInput       = document.getElementById('nav-input');
@@ -535,7 +547,7 @@
         if (finalSubmitted) return;
         showOnly('finalQuestion');
         finalQInput.value = '';
-        finalNameInput.value = '';
+        finalNameInput.value = userName;
         finalQInput.disabled = false;
         finalNameInput.disabled = false;
         finalQSubmit.disabled = false;
@@ -562,6 +574,19 @@
         fetch(formUrl, { method: 'POST', mode: 'no-cors', body });
     }
 
+    function submitName() {
+        const name = document.getElementById('name-input').value.trim();
+        const errorEl = document.getElementById('name-error');
+        if (!name) {
+            errorEl.textContent = '氏名を入力してください';
+            return;
+        }
+        errorEl.textContent = '';
+        userName = name;
+        showOnly('menu');
+        document.getElementById('top-nav-input').focus();
+    }
+
     function topNavigate() {
         const num = parseInt(document.getElementById('top-nav-input').value);
         const errorEl = document.getElementById('top-nav-error');
@@ -576,6 +601,8 @@
         loadQuestion(currentIndex);
     }
 
+    document.getElementById('name-submit-btn').addEventListener('click', submitName);
+    document.getElementById('name-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitName(); });
     document.getElementById('top-nav-btn').addEventListener('click', topNavigate);
     document.getElementById('top-nav-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') topNavigate(); });
 
@@ -591,7 +618,8 @@
 
 
     updateFooterBtn();
-    showOnly('top');
+    showOnly('name');
+    document.getElementById('name-input').focus();
 </script>
 </body>
 </html>
