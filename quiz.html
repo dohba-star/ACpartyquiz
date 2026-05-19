@@ -253,13 +253,33 @@
         /* 最終問題回答画面 */
         .final-question-screen { display: none; }
 
-        .final-question-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #222;
-            margin-bottom: 24px;
-            text-align: center;
+        .final-field {
+            margin-bottom: 20px;
         }
+
+        .final-label {
+            display: block;
+            font-size: 15px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .back-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            background: white;
+            color: #888;
+            border: 2px solid #dde3ea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover { background: #f0f4f8; }
 
         .send-done {
             display: none;
@@ -345,17 +365,24 @@
 
     <!-- 最終問題回答画面 -->
     <div id="final-question-screen" class="final-question-screen">
-        <div class="final-question-title">最終問題の解答を入力してください</div>
-        <input type="text" class="answer-input" id="final-q-input" placeholder="解答を入力してください" />
-        <button class="submit-btn" id="final-q-submit">解答を送付</button>
+        <div class="final-field">
+            <label class="final-label">最後の答え</label>
+            <input type="text" class="answer-input" id="final-q-input" placeholder="解答を入力してください" />
+        </div>
+        <div class="final-field">
+            <label class="final-label">氏名</label>
+            <input type="text" class="answer-input" id="final-name-input" placeholder="氏名を入力してください" />
+        </div>
+        <button class="submit-btn" id="final-q-submit">送付</button>
         <div class="send-done" id="send-done">送信しました</div>
+        <button class="back-btn" id="final-back-btn">戻る</button>
     </div>
 
 </div>
 
 <!-- 固定フッターボタン -->
 <div class="footer-btn-wrap">
-    <button class="footer-btn" id="goto-final-btn">最終問題へ解答</button>
+    <button class="footer-btn" id="goto-final-btn">最後の答えの送信</button>
 </div>
 
 <script>
@@ -418,6 +445,7 @@
     const resultHint     = document.getElementById('result-hint');
     const nextBtn        = document.getElementById('next-btn');
     const finalQInput    = document.getElementById('final-q-input');
+    const finalNameInput = document.getElementById('final-name-input');
     const finalQSubmit   = document.getElementById('final-q-submit');
     const sendDone       = document.getElementById('send-done');
     const gotoFinalBtn   = document.getElementById('goto-final-btn');
@@ -498,7 +526,9 @@
     function showFinalQuestion() {
         showOnly('finalQuestion');
         finalQInput.value = '';
+        finalNameInput.value = '';
         finalQInput.disabled = false;
+        finalNameInput.disabled = false;
         finalQSubmit.disabled = false;
         sendDone.style.display = 'none';
         finalQInput.focus();
@@ -506,12 +536,14 @@
 
     function submitFinalAnswer() {
         const answer = finalQInput.value.trim();
-        if (!answer) return;
+        const name   = finalNameInput.value.trim();
+        if (!answer || !name) return;
         finalQInput.disabled = true;
+        finalNameInput.disabled = true;
         finalQSubmit.disabled = true;
         sendDone.style.display = 'block';
         // Google Forms 送信（後で設定）
-        // submitToGoogleForm(answer);
+        // submitToGoogleForm(answer, name);
     }
 
     document.getElementById('start-btn').addEventListener('click', () => {
@@ -527,6 +559,7 @@
     gotoFinalBtn.addEventListener('click', showFinalQuestion);
     finalQSubmit.addEventListener('click', submitFinalAnswer);
     finalQInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFinalAnswer(); });
+    document.getElementById('final-back-btn').addEventListener('click', () => showOnly('quiz'));
 
     // Google Forms 送信関数（後で設定）
     // function submitToGoogleForm(answer) {
