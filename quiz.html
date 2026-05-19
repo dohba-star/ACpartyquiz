@@ -236,19 +236,12 @@
             min-height: 200px;
         }
 
-        .start-btn {
-            padding: 18px 48px;
-            font-size: 20px;
+        .top-label {
+            font-size: 18px;
             font-weight: bold;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
+            color: #444;
+            margin-bottom: 20px;
         }
-
-        .start-btn:hover { background: #3a7bd5; }
 
         /* 最終問題回答画面 */
         .final-question-screen { display: none; }
@@ -327,7 +320,14 @@
 
     <!-- トップ画面 -->
     <div id="top-screen" class="top-screen">
-        <button class="start-btn" id="start-btn">解答する</button>
+        <div class="top-label">問題番号を入力してください</div>
+        <div class="question-nav">
+            <label for="top-nav-input">第</label>
+            <input type="number" class="question-nav-input" id="top-nav-input" min="1" placeholder="?" />
+            <label for="top-nav-input">問</label>
+            <button class="question-nav-btn" id="top-nav-btn">移動</button>
+        </div>
+        <div class="nav-error" id="top-nav-error"></div>
     </div>
 
     <!-- クイズ画面 -->
@@ -542,14 +542,30 @@
         finalNameInput.disabled = true;
         finalQSubmit.disabled = true;
         sendDone.style.display = 'block';
-        // Google Forms 送信（後で設定）
-        // submitToGoogleForm(answer, name);
+
+        const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfyNGH222hnSBl6Lfj77Dx_o7vRzhgjdivnzSpO4W8N7BLdqg/formResponse';
+        const body = new FormData();
+        body.append('entry.798180189', answer);
+        body.append('entry.1420705625', name);
+        fetch(formUrl, { method: 'POST', mode: 'no-cors', body });
     }
 
-    document.getElementById('start-btn').addEventListener('click', () => {
+    function topNavigate() {
+        const num = parseInt(document.getElementById('top-nav-input').value);
+        const errorEl = document.getElementById('top-nav-error');
+        if (isNaN(num) || num < 1 || num > questions.length) {
+            errorEl.textContent = 'その問題は存在しません';
+            return;
+        }
+        errorEl.textContent = '';
+        currentIndex = num - 1;
+        navInput.value = num;
         showOnly('quiz');
         loadQuestion(currentIndex);
-    });
+    }
+
+    document.getElementById('top-nav-btn').addEventListener('click', topNavigate);
+    document.getElementById('top-nav-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') topNavigate(); });
 
     navBtn.addEventListener('click', navigateByInput);
     navInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') navigateByInput(); });
@@ -561,13 +577,6 @@
     finalQInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFinalAnswer(); });
     document.getElementById('final-back-btn').addEventListener('click', () => showOnly('quiz'));
 
-    // Google Forms 送信関数（後で設定）
-    // function submitToGoogleForm(answer) {
-    //     const formUrl = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse';
-    //     const body = new FormData();
-    //     body.append('entry.XXXXXXXXX', answer);
-    //     fetch(formUrl, { method: 'POST', mode: 'no-cors', body });
-    // }
 
     showOnly('top');
 </script>
