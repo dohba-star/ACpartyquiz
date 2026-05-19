@@ -321,8 +321,8 @@
         <div class="nav-error" id="nav-error"></div>
         <div class="question-number" id="question-number"></div>
         <div class="question-text" id="question-text"></div>
-        <input type="text" class="answer-input" id="answer-input" placeholder="回答を入力してください" />
-        <button class="submit-btn" id="submit-btn">回答する</button>
+        <input type="text" class="answer-input" id="answer-input" placeholder="解答を入力してください" />
+        <button class="submit-btn" id="submit-btn">解答する</button>
         <div class="result" id="result">
             <div class="result-label" id="result-label"></div>
             <div class="result-hint" id="result-hint"></div>
@@ -345,9 +345,9 @@
 
     <!-- 最終問題回答画面 -->
     <div id="final-question-screen" class="final-question-screen">
-        <div class="final-question-title">最終問題の回答を入力してください</div>
-        <input type="text" class="answer-input" id="final-q-input" placeholder="回答を入力してください" />
-        <button class="submit-btn" id="final-q-submit">回答を送付</button>
+        <div class="final-question-title">最終問題の解答を入力してください</div>
+        <input type="text" class="answer-input" id="final-q-input" placeholder="解答を入力してください" />
+        <button class="submit-btn" id="final-q-submit">解答を送付</button>
         <div class="send-done" id="send-done">送信しました</div>
     </div>
 
@@ -355,7 +355,7 @@
 
 <!-- 固定フッターボタン -->
 <div class="footer-btn-wrap">
-    <button class="footer-btn" id="goto-final-btn">最終問題へ回答</button>
+    <button class="footer-btn" id="goto-final-btn">最終問題へ解答</button>
 </div>
 
 <script>
@@ -453,7 +453,7 @@
             resultDiv.style.display = 'block';
             resultDiv.className = `result ${s.isCorrect ? 'correct' : 'incorrect'}`;
             resultLabel.textContent = s.isCorrect ? '⭕ 正解！' : '❌ 不正解';
-            resultHint.textContent = s.isCorrect ? questions[index].hint : '';
+            resultHint.innerHTML = s.isCorrect ? questions[index].hint.replace('：', '：<br>') : '';
 
             const allAnswered = states.every(st => st !== null);
             const allCorrect  = states.every(st => st && st.isCorrect);
@@ -483,7 +483,7 @@
         resultDiv.style.display = 'block';
         resultDiv.className = `result ${isCorrect ? 'correct' : 'incorrect'}`;
         resultLabel.textContent = isCorrect ? '⭕ 正解！' : '❌ 不正解';
-        resultHint.textContent = isCorrect ? q.hint : '';
+        resultHint.innerHTML = isCorrect ? q.hint.replace('：', '：<br>') : '';
 
         const allAnswered = states.every(s => s !== null);
         const allCorrect  = states.every(s => s && s.isCorrect);
