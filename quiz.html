@@ -313,6 +313,81 @@
         }
 
         .footer-btn:hover { background: #cf5200; }
+
+        /* タイマー */
+        .timer-container {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .timer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .timer-label { font-size: 12px; color: #888; }
+
+        .timer-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .timer-bar-bg {
+            background: #e8edf2;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s linear, background 1s;
+        }
+
+        /* 3択選択肢 */
+        .options-container {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+            background: white;
+            color: #333;
+            border: 2px solid #dde3ea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #4a90e2;
+            background: #f0f6ff;
+        }
+
+        .option-btn.selected-correct {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .option-btn.selected-incorrect {
+            background: #fdecea;
+            border-color: #e53935;
+            color: #c62828;
+        }
+
+        .option-btn:disabled { cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -349,8 +424,18 @@
             <button class="question-nav-btn" id="nav-btn">移動</button>
         </div>
         <div class="nav-error" id="nav-error"></div>
+        <div class="timer-container" id="timer-container">
+            <div class="timer-header">
+                <span class="timer-label">残り時間</span>
+                <span class="timer-text" id="timer-text">0</span>
+            </div>
+            <div class="timer-bar-bg">
+                <div class="timer-bar-fill" id="timer-bar-fill"></div>
+            </div>
+        </div>
         <div class="question-number" id="question-number"></div>
         <div class="question-text" id="question-text"></div>
+        <div class="options-container" id="options-container"></div>
         <input type="text" class="answer-input" id="answer-input" placeholder="解答を入力してください" />
         <button class="submit-btn" id="submit-btn">解答する</button>
         <div class="result" id="result">
@@ -397,20 +482,20 @@
 
 <script>
     const questions = [
-        { number: '第1問',  text: '', answers: ['黒柳徹子', 'くろやなぎてつこ'], hint: '最終問題の答えのヒント：答えは1つの単語' },
-        { number: '第2問',  text: '', answers: ['蠍', 'さそり'],                hint: '最後の答えのヒント：答えは日本語' },
-        { number: '第3問',  text: '', answers: ['うお', '魚'],                  hint: '最終問題の答えのヒント：答えは「かくもの」' },
-        { number: '第4問',  text: '', answers: ['ほ'],                          hint: '最後の答えのヒント：アグリコネクトに関係がある言葉' },
-        { number: '第5問',  text: '', answers: ['寄席', 'よせ'],                hint: '最終問題の答えのヒント：答えは「みるもの」' },
-        { number: '第6問',  text: '', answers: ['的', 'まと'],                  hint: '最後の答えのヒント：このパーティーに関係がある言葉' },
-        { number: '第7問',  text: '', answers: ['日にち', 'ひにち'],             hint: '最終問題の答えのヒント：答えは2文字' },
-        { number: '第8問',  text: '', answers: ['船', 'ふね'],                  hint: '最後の答えのヒント：あなたが知っている言葉' },
-        { number: '第9問',  text: '', answers: ['ケール'],                      hint: '最終問題の答えのヒント：QRコードの裏面のメモに注目しよう' },
-        { number: '第10問', text: '', answers: ['ハワイ'],                      hint: '最後の答えのヒント：手元にあるものに使おう' },
-        { number: '第11問', text: '', answers: ['鮎', 'あゆ'],                  hint: '最終問題の答えのヒント：イラストに注目しよう' },
-        { number: '第12問', text: '', answers: ['ラミレス'],                    hint: '最後の答えのヒント：すべての問題の答えが必要' },
-        { number: '第13問', text: '', answers: ['鵺', 'ぬえ'],                  hint: '最終問題の答えのヒント：すべての答えを消してみよう' },
-        { number: '最終問題', text: '', answers: ['メモ'],                       hint: 'すべての問題の答えを消した時にあなたの手元に残っている言葉が最後の答え' },
+        { number: '第1問',  text: '', answers: ['黒柳徹子', 'くろやなぎてつこ'], timeLimit: 15, hint: '最終問題の答えのヒント：答えは1つの単語' },
+        { number: '第2問',  text: '', answers: ['蠍', 'さそり'],                timeLimit: 15, hint: '最後の答えのヒント：答えは日本語' },
+        { number: '第3問',  text: '', answers: ['うお', '魚'],                  timeLimit: 15, hint: '最終問題の答えのヒント：答えは「かくもの」' },
+        { number: '第4問',  text: '', answers: ['ほ'],                          timeLimit: 40, hint: '最後の答えのヒント：アグリコネクトに関係がある言葉' },
+        { number: '第5問',  text: '', answers: ['寄席', 'よせ'],                timeLimit: 40, hint: '最終問題の答えのヒント：答えは「みるもの」' },
+        { number: '第6問',  text: '', answers: ['的', 'まと'],                  timeLimit: 40, hint: '最後の答えのヒント：このパーティーに関係がある言葉' },
+        { number: '第7問',  text: '', answers: ['日にち', 'ひにち'],             timeLimit: 40, hint: '最終問題の答えのヒント：答えは2文字' },
+        { number: '第8問',  text: '', answers: ['船', 'ふね'],                  timeLimit: 40, hint: '最後の答えのヒント：あなたが知っている言葉' },
+        { number: '第9問',  text: '', answers: ['ケール'],         options: ['リーフレタス', 'ケール', 'チンゲン菜'], timeLimit: 15, hint: '最終問題の答えのヒント：QRコードの裏面のメモに注目しよう' },
+        { number: '第10問', text: '', answers: ['ハワイ'],         options: ['佐渡', '奄美', 'ハワイ'],              timeLimit: 15, hint: '最後の答えのヒント：手元にあるものに使おう' },
+        { number: '第11問', text: '', answers: ['鮎', 'あゆ'],     options: ['イワナ', 'ヤマメ', 'アユ'],            timeLimit: 15, hint: '最終問題の答えのヒント：イラストに注目しよう' },
+        { number: '第12問', text: '', answers: ['ラミレス'],       options: ['ラミレス', 'ペタジーニ', 'ブランコ'],  timeLimit: 15, hint: '最後の答えのヒント：すべての問題の答えが必要' },
+        { number: '第13問', text: '', answers: ['鵺', 'ぬえ'],     options: ['鵠', '鴇', '鵺'],                    timeLimit: 15, hint: '最終問題の答えのヒント：すべての答えを消してみよう' },
+        { number: '最終問題', text: '', answers: ['メモ'],          timeLimit: null, hint: 'すべての問題の答えを消した時にあなたの手元に残っている言葉が最後の答え' },
     ];
 
     function normalize(str) {
@@ -427,6 +512,66 @@
     let currentIndex = 0;
     let userName = '';
     const states = Array(questions.length).fill(null);
+    let timerInterval = null;
+    let timerRemaining = 0;
+
+    const timerContainer = document.getElementById('timer-container');
+    const timerText      = document.getElementById('timer-text');
+    const timerBarFill   = document.getElementById('timer-bar-fill');
+
+    function stopTimer() {
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    }
+
+    function startTimer(seconds) {
+        stopTimer();
+        timerRemaining = seconds;
+        timerContainer.style.display = 'block';
+        updateTimerDisplay(seconds, seconds);
+
+        timerInterval = setInterval(() => {
+            timerRemaining--;
+            updateTimerDisplay(timerRemaining, seconds);
+            if (timerRemaining <= 0) {
+                stopTimer();
+                onTimeout();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay(remaining, total) {
+        timerText.textContent = remaining + '秒';
+        const pct = total > 0 ? (remaining / total) * 100 : 0;
+        timerBarFill.style.width = pct + '%';
+        timerBarFill.style.background = pct > 50 ? '#4caf50' : pct > 25 ? '#ff9800' : '#e53935';
+        timerText.style.color         = pct > 50 ? '#4caf50' : pct > 25 ? '#ff9800' : '#e53935';
+    }
+
+    function onTimeout() {
+        const q = questions[currentIndex];
+        if (states[currentIndex]) return;
+        states[currentIndex] = { userAnswer: '（時間切れ）', isCorrect: false };
+
+        if (q.options) {
+            renderOptions(q, '（時間切れ）');
+        } else {
+            answerInput.disabled = true;
+            submitBtn.disabled = true;
+        }
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'result incorrect';
+        resultLabel.textContent = '⏰ 時間切れ';
+        resultHint.innerHTML = '';
+
+        const allAnswered = states.every(s => s !== null);
+        const allCorrect  = states.every(s => s && s.isCorrect);
+        if (allAnswered && allCorrect) {
+            setTimeout(() => showOnly('secret'), 1000);
+        } else if (allAnswered && !allCorrect) {
+            nextBtn.style.display = 'block';
+        }
+    }
 
     const screens = {
         name:          document.getElementById('name-screen'),
@@ -448,18 +593,20 @@
     }
 
     function showOnly(screenKey) {
+        if (screenKey !== 'quiz') stopTimer();
         Object.values(screens).forEach(s => s.style.display = 'none');
         screens[screenKey].style.display = 'block';
         footerBtnWrap.style.display = (screenKey === 'name' || screenKey === 'finalQuestion') ? 'none' : 'flex';
     }
 
-    const navInput       = document.getElementById('nav-input');
-    const navBtn         = document.getElementById('nav-btn');
-    const navError       = document.getElementById('nav-error');
-    const questionNumber = document.getElementById('question-number');
-    const questionText   = document.getElementById('question-text');
-    const answerInput    = document.getElementById('answer-input');
-    const submitBtn      = document.getElementById('submit-btn');
+    const navInput         = document.getElementById('nav-input');
+    const navBtn           = document.getElementById('nav-btn');
+    const navError         = document.getElementById('nav-error');
+    const questionNumber   = document.getElementById('question-number');
+    const questionText     = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const answerInput      = document.getElementById('answer-input');
+    const submitBtn        = document.getElementById('submit-btn');
     const resultDiv      = document.getElementById('result');
     const resultLabel    = document.getElementById('result-label');
     const resultHint     = document.getElementById('result-hint');
@@ -487,6 +634,30 @@
         loadQuestion(index);
     }
 
+    function renderOptions(q, answeredValue) {
+        optionsContainer.innerHTML = '';
+        optionsContainer.style.display = 'flex';
+        answerInput.style.display = 'none';
+        submitBtn.style.display = 'none';
+
+        q.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = `${'①②③'[i]} ${opt}`;
+
+            if (answeredValue !== null) {
+                btn.disabled = true;
+                if (opt === answeredValue) {
+                    const correct = isCorrectAnswer(opt, q.answers);
+                    btn.classList.add(correct ? 'selected-correct' : 'selected-incorrect');
+                }
+            } else {
+                btn.addEventListener('click', () => checkAnswerWithValue(opt));
+            }
+            optionsContainer.appendChild(btn);
+        });
+    }
+
     function loadQuestion(index) {
         const q = questions[index];
         const s = states[index];
@@ -494,26 +665,67 @@
         questionNumber.textContent = q.number;
         questionText.textContent = q.text;
 
+        if (q.options) {
+            renderOptions(q, s ? s.userAnswer : null);
+        } else {
+            optionsContainer.style.display = 'none';
+            answerInput.style.display = 'block';
+            submitBtn.style.display = 'block';
+        }
+
         if (s) {
-            answerInput.value = s.userAnswer;
-            answerInput.disabled = true;
-            submitBtn.disabled = true;
+            stopTimer();
+            timerContainer.style.display = 'none';
+            if (!q.options) {
+                answerInput.value = s.userAnswer;
+                answerInput.disabled = true;
+                submitBtn.disabled = true;
+            }
             resultDiv.style.display = 'block';
             resultDiv.className = `result ${s.isCorrect ? 'correct' : 'incorrect'}`;
-            resultLabel.textContent = s.isCorrect ? '⭕ 正解！' : '❌ 不正解';
-            resultHint.innerHTML = s.isCorrect ? questions[index].hint.replace('：', '：<br>') : '';
+            resultLabel.textContent = s.isCorrect ? '⭕ 正解！' : (s.userAnswer === '（時間切れ）' ? '⏰ 時間切れ' : '❌ 不正解');
+            resultHint.innerHTML = s.isCorrect ? q.hint.replace('：', '：<br>') : '';
 
             const allAnswered = states.every(st => st !== null);
             const allCorrect  = states.every(st => st && st.isCorrect);
             nextBtn.style.display = (allAnswered && !allCorrect) ? 'block' : 'none';
         } else {
-            answerInput.value = '';
-            answerInput.disabled = false;
-            answerInput.focus();
+            if (!q.options) {
+                answerInput.value = '';
+                answerInput.disabled = false;
+                answerInput.focus();
+                submitBtn.disabled = false;
+            }
             resultDiv.style.display = 'none';
             resultDiv.className = 'result';
             nextBtn.style.display = 'none';
-            submitBtn.disabled = false;
+            if (q.timeLimit) startTimer(q.timeLimit);
+            else timerContainer.style.display = 'none';
+        }
+    }
+
+    function checkAnswerWithValue(userAnswer) {
+        const q = questions[currentIndex];
+        const isCorrect = isCorrectAnswer(userAnswer, q.answers);
+
+        states[currentIndex] = { userAnswer, isCorrect };
+        stopTimer();
+        timerContainer.style.display = 'none';
+
+        renderOptions(q, userAnswer);
+
+        resultDiv.style.display = 'block';
+        resultDiv.className = `result ${isCorrect ? 'correct' : 'incorrect'}`;
+        resultLabel.textContent = isCorrect ? '⭕ 正解！' : '❌ 不正解';
+        resultHint.innerHTML = isCorrect ? q.hint.replace('：', '：<br>') : '';
+
+        const allAnswered = states.every(s => s !== null);
+        const allCorrect  = states.every(s => s && s.isCorrect);
+
+        if (allAnswered && allCorrect) {
+            setTimeout(() => showOnly('secret'), 1000);
+        } else if (allAnswered && !allCorrect) {
+            nextBtn.style.display = 'block';
         }
     }
 
@@ -525,6 +737,8 @@
         const isCorrect = isCorrectAnswer(userAnswer, q.answers);
 
         states[currentIndex] = { userAnswer, isCorrect };
+        stopTimer();
+        timerContainer.style.display = 'none';
         answerInput.disabled = true;
         submitBtn.disabled = true;
 
