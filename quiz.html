@@ -422,6 +422,7 @@
             line-height: 1.6;
             margin-bottom: 24px;
             color: #333;
+            white-space: pre-line;
         }
 
         .modal-buttons {
@@ -917,7 +918,7 @@
         const answer = finalQInput.value.trim();
         const name   = finalNameInput.value.trim();
         if (!answer || !name) return;
-        showConfirmModal(`一度しか送信できませんが「${answer}」いいですか？`, doSubmitFinalAnswer);
+        showConfirmModal(`一人一度しか送信できません。\n最後の答えは「${answer}」でいいですか？`, doSubmitFinalAnswer);
     }
 
     function submitName() {
