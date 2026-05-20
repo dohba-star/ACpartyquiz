@@ -388,6 +388,76 @@
         }
 
         .option-btn:disabled { cursor: not-allowed; }
+
+        .option-btn.selected {
+            border-color: #4a90e2;
+            background: #e8f0fe;
+            color: #1a5cad;
+        }
+
+        /* 確認モーダル */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 360px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn-no {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background: white;
+            color: #888;
+            border: 2px solid #dde3ea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .modal-btn-no:hover { background: #f0f4f8; }
+
+        .modal-btn-yes {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #e65c00;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .modal-btn-yes:hover { background: #cf5200; }
     </style>
 </head>
 <body>
@@ -475,6 +545,17 @@
 
 </div>
 
+<!-- 確認モーダル -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-box">
+        <p class="modal-message" id="confirm-message"></p>
+        <div class="modal-buttons">
+            <button class="modal-btn-no" id="confirm-no">いいえ</button>
+            <button class="modal-btn-yes" id="confirm-yes">はい</button>
+        </div>
+    </div>
+</div>
+
 <!-- 固定フッターボタン -->
 <div class="footer-btn-wrap">
     <button class="footer-btn" id="goto-final-btn">最後の答えの送信</button>
@@ -482,9 +563,9 @@
 
 <script>
     const questions = [
-        { number: '第1問',  text: '', answers: ['黒柳徹子', 'くろやなぎてつこ'], timeLimit: 15, hint: '最終問題の答えのヒント：答えは1つの単語' },
-        { number: '第2問',  text: '', answers: ['蠍', 'さそり'],                timeLimit: 15, hint: '最後の答えのヒント：答えは日本語' },
-        { number: '第3問',  text: '', answers: ['うお', '魚'],                  timeLimit: 15, hint: '最終問題の答えのヒント：答えは「かくもの」' },
+        { number: '第1問',  text: '', answers: ['黒柳徹子', 'くろやなぎてつこ'], timeLimit: 20, hint: '最終問題の答えのヒント：答えは1つの単語' },
+        { number: '第2問',  text: '', answers: ['蠍', 'さそり'],                timeLimit: 20, hint: '最後の答えのヒント：答えは日本語' },
+        { number: '第3問',  text: '', answers: ['うお', '魚'],                  timeLimit: 20, hint: '最終問題の答えのヒント：答えは「かくもの」' },
         { number: '第4問',  text: '', answers: ['ほ'],                          timeLimit: 40, hint: '最後の答えのヒント：アグリコネクトに関係がある言葉' },
         { number: '第5問',  text: '', answers: ['寄席', 'よせ'],                timeLimit: 40, hint: '最終問題の答えのヒント：答えは「みるもの」' },
         { number: '第6問',  text: '', answers: ['的', 'まと'],                  timeLimit: 40, hint: '最後の答えのヒント：このパーティーに関係がある言葉' },
@@ -514,6 +595,7 @@
     const states = Array(questions.length).fill(null);
     let timerInterval = null;
     let timerRemaining = 0;
+    let selectedOption = null;
 
     const timerContainer = document.getElementById('timer-container');
     const timerText      = document.getElementById('timer-text');
@@ -638,24 +720,37 @@
         optionsContainer.innerHTML = '';
         optionsContainer.style.display = 'flex';
         answerInput.style.display = 'none';
-        submitBtn.style.display = 'none';
 
-        q.options.forEach((opt, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.textContent = `${'①②③'[i]} ${opt}`;
-
-            if (answeredValue !== null) {
+        if (answeredValue !== null) {
+            submitBtn.style.display = 'none';
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = `${'①②③'[i]} ${opt}`;
                 btn.disabled = true;
                 if (opt === answeredValue) {
                     const correct = isCorrectAnswer(opt, q.answers);
                     btn.classList.add(correct ? 'selected-correct' : 'selected-incorrect');
                 }
-            } else {
-                btn.addEventListener('click', () => checkAnswerWithValue(opt));
-            }
-            optionsContainer.appendChild(btn);
-        });
+                optionsContainer.appendChild(btn);
+            });
+        } else {
+            selectedOption = null;
+            submitBtn.style.display = 'block';
+            submitBtn.disabled = true;
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = `${'①②③'[i]} ${opt}`;
+                btn.addEventListener('click', () => {
+                    optionsContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedOption = opt;
+                    submitBtn.disabled = false;
+                });
+                optionsContainer.appendChild(btn);
+            });
+        }
     }
 
     function loadQuestion(index) {
@@ -730,10 +825,15 @@
     }
 
     function checkAnswer() {
+        const q = questions[currentIndex];
+        if (q.options) {
+            if (!selectedOption) return;
+            checkAnswerWithValue(selectedOption);
+            return;
+        }
         const userAnswer = answerInput.value.trim();
         if (!userAnswer) return;
 
-        const q = questions[currentIndex];
         const isCorrect = isCorrectAnswer(userAnswer, q.answers);
 
         states[currentIndex] = { userAnswer, isCorrect };
@@ -769,7 +869,32 @@
         finalQInput.focus();
     }
 
-    function submitFinalAnswer() {
+    const confirmModal   = document.getElementById('confirm-modal');
+    const confirmMessage = document.getElementById('confirm-message');
+    const confirmYes     = document.getElementById('confirm-yes');
+    const confirmNo      = document.getElementById('confirm-no');
+    let confirmCallback  = null;
+
+    function showConfirmModal(message, onYes) {
+        confirmMessage.textContent = message;
+        confirmCallback = onYes;
+        confirmModal.classList.add('active');
+    }
+
+    function closeConfirmModal() {
+        confirmModal.classList.remove('active');
+        confirmCallback = null;
+    }
+
+    confirmYes.addEventListener('click', () => {
+        const cb = confirmCallback;
+        closeConfirmModal();
+        if (cb) cb();
+    });
+
+    confirmNo.addEventListener('click', closeConfirmModal);
+
+    function doSubmitFinalAnswer() {
         const answer = finalQInput.value.trim();
         const name   = finalNameInput.value.trim();
         if (!answer || !name) return;
@@ -786,6 +911,13 @@
         body.append('entry.798180189', answer);
         body.append('entry.1420705625', name);
         fetch(formUrl, { method: 'POST', mode: 'no-cors', body });
+    }
+
+    function submitFinalAnswer() {
+        const answer = finalQInput.value.trim();
+        const name   = finalNameInput.value.trim();
+        if (!answer || !name) return;
+        showConfirmModal(`一度しか送信できませんが「${answer}」いいですか？`, doSubmitFinalAnswer);
     }
 
     function submitName() {
