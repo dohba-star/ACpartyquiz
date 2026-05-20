@@ -918,7 +918,7 @@
         const answer = finalQInput.value.trim();
         const name   = finalNameInput.value.trim();
         if (!answer || !name) return;
-        showConfirmModal(`最後の答えは一人一度しか送信できません\n答えは「${answer}」でいいですか？`, doSubmitFinalAnswer);
+        showConfirmModal(`最後の答えは一度しか送信できません\n答えは「${answer}」でいいですか？`, doSubmitFinalAnswer);
     }
 
     function submitName() {
