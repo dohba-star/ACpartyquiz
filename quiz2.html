@@ -63,7 +63,7 @@
 
         .answer-input:focus { border-color: #4a90e2; }
 
-        .submit-btn {
+        .primary-btn {
             width: 100%;
             margin-top: 8px;
             padding: 14px;
@@ -78,7 +78,24 @@
             font-family: inherit;
         }
 
-        .submit-btn:hover { background: #cf5200; }
+        .primary-btn:hover { background: #cf5200; }
+
+        .back-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            background: white;
+            color: #888;
+            border: 2px solid #dde3ea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        .back-btn:hover { background: #f0f4f8; }
 
         .name-display {
             font-size: 14px;
@@ -92,24 +109,21 @@
             font-weight: bold;
         }
 
-        .send-done {
-            display: none;
-            margin-top: 16px;
-            padding: 16px;
-            background: #e8f5e9;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #2e7d32;
-        }
-
         .nav-error {
             text-align: center;
             color: #e53935;
             font-size: 13px;
             margin-top: 8px;
             min-height: 18px;
+        }
+
+        .done-message {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2e7d32;
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 30px 0;
         }
     </style>
 </head>
@@ -124,7 +138,7 @@
             <label class="field-label">氏名</label>
             <input type="text" class="answer-input" id="name-input" placeholder="氏名を入力してください" />
         </div>
-        <button class="submit-btn" id="name-next-btn">次へ</button>
+        <button class="primary-btn" id="name-next-btn">次へ</button>
         <div class="nav-error" id="name-error"></div>
     </div>
 
@@ -136,23 +150,29 @@
             <label class="field-label">最後の答え</label>
             <input type="text" class="answer-input" id="final-q-input" placeholder="解答を入力してください" />
         </div>
-        <button class="submit-btn" id="final-q-submit">送信する</button>
-        <div class="send-done" id="send-done">送信しました</div>
+        <button class="primary-btn" id="final-q-submit">送信する</button>
+        <div class="nav-error" id="answer-error"></div>
+    </div>
+
+    <!-- 送信完了画面 -->
+    <div id="done-screen" class="screen">
+        <div class="done-message">送信しました</div>
+        <button class="back-btn" id="back-to-answer-btn">入力画面に戻る</button>
     </div>
 
 </div>
 
 <script>
-    const nameInput    = document.getElementById('name-input');
-    const nameNextBtn  = document.getElementById('name-next-btn');
-    const nameError    = document.getElementById('name-error');
-    const nameDisplay  = document.getElementById('name-display');
-    const finalQInput  = document.getElementById('final-q-input');
-    const finalQSubmit = document.getElementById('final-q-submit');
-    const sendDone     = document.getElementById('send-done');
+    const nameInput       = document.getElementById('name-input');
+    const nameNextBtn     = document.getElementById('name-next-btn');
+    const nameError       = document.getElementById('name-error');
+    const nameDisplay     = document.getElementById('name-display');
+    const finalQInput     = document.getElementById('final-q-input');
+    const finalQSubmit    = document.getElementById('final-q-submit');
+    const answerError     = document.getElementById('answer-error');
+    const backToAnswerBtn = document.getElementById('back-to-answer-btn');
 
     let userName = '';
-    let sendDoneTimer = null;
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -168,15 +188,19 @@
         nameError.textContent = '';
         userName = name;
         nameDisplay.textContent = userName;
-        showScreen('answer-screen');
         finalQInput.value = '';
-        sendDone.style.display = 'none';
+        answerError.textContent = '';
+        showScreen('answer-screen');
         finalQInput.focus();
     }
 
     function submitAnswer() {
         const answer = finalQInput.value.trim();
-        if (!answer) return;
+        if (!answer) {
+            answerError.textContent = '答えを入力してください';
+            return;
+        }
+        answerError.textContent = '';
 
         const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfyNGH222hnSBl6Lfj77Dx_o7vRzhgjdivnzSpO4W8N7BLdqg/formResponse';
         const body = new FormData();
@@ -184,10 +208,13 @@
         body.append('entry.1420705625', userName);
         fetch(formUrl, { method: 'POST', mode: 'no-cors', body });
 
+        showScreen('done-screen');
+    }
+
+    function backToAnswer() {
         finalQInput.value = '';
-        sendDone.style.display = 'block';
-        if (sendDoneTimer) clearTimeout(sendDoneTimer);
-        sendDoneTimer = setTimeout(() => { sendDone.style.display = 'none'; }, 3000);
+        answerError.textContent = '';
+        showScreen('answer-screen');
         finalQInput.focus();
     }
 
@@ -195,6 +222,7 @@
     nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitName(); });
     finalQSubmit.addEventListener('click', submitAnswer);
     finalQInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAnswer(); });
+    backToAnswerBtn.addEventListener('click', backToAnswer);
 </script>
 </body>
 </html>
