@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最後の答えの送信</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 15px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #dde3ea;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .answer-input:focus { border-color: #4a90e2; }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 8px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #e65c00;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        .submit-btn:hover { background: #cf5200; }
+
+        .name-display {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .name-display span {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .send-done {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .nav-error {
+            text-align: center;
+            color: #e53935;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- 氏名入力画面 -->
+    <div id="name-screen" class="screen active">
+        <div class="page-title">氏名を入力してください</div>
+        <div class="field">
+            <label class="field-label">氏名</label>
+            <input type="text" class="answer-input" id="name-input" placeholder="氏名を入力してください" />
+        </div>
+        <button class="submit-btn" id="name-next-btn">次へ</button>
+        <div class="nav-error" id="name-error"></div>
+    </div>
+
+    <!-- 回答画面 -->
+    <div id="answer-screen" class="screen">
+        <div class="page-title">最後の答えの送信</div>
+        <div class="name-display">氏名：<span id="name-display"></span></div>
+        <div class="field">
+            <label class="field-label">最後の答え</label>
+            <input type="text" class="answer-input" id="final-q-input" placeholder="解答を入力してください" />
+        </div>
+        <button class="submit-btn" id="final-q-submit">送信する</button>
+        <div class="send-done" id="send-done">送信しました</div>
+    </div>
+
+</div>
+
+<script>
+    const nameInput    = document.getElementById('name-input');
+    const nameNextBtn  = document.getElementById('name-next-btn');
+    const nameError    = document.getElementById('name-error');
+    const nameDisplay  = document.getElementById('name-display');
+    const finalQInput  = document.getElementById('final-q-input');
+    const finalQSubmit = document.getElementById('final-q-submit');
+    const sendDone     = document.getElementById('send-done');
+
+    let userName = '';
+    let sendDoneTimer = null;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function submitName() {
+        const name = nameInput.value.trim();
+        if (!name) {
+            nameError.textContent = '氏名を入力してください';
+            return;
+        }
+        nameError.textContent = '';
+        userName = name;
+        nameDisplay.textContent = userName;
+        showScreen('answer-screen');
+        finalQInput.value = '';
+        sendDone.style.display = 'none';
+        finalQInput.focus();
+    }
+
+    function submitAnswer() {
+        const answer = finalQInput.value.trim();
+        if (!answer) return;
+
+        const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfyNGH222hnSBl6Lfj77Dx_o7vRzhgjdivnzSpO4W8N7BLdqg/formResponse';
+        const body = new FormData();
+        body.append('entry.798180189', answer);
+        body.append('entry.1420705625', userName);
+        fetch(formUrl, { method: 'POST', mode: 'no-cors', body });
+
+        finalQInput.value = '';
+        sendDone.style.display = 'block';
+        if (sendDoneTimer) clearTimeout(sendDoneTimer);
+        sendDoneTimer = setTimeout(() => { sendDone.style.display = 'none'; }, 3000);
+        finalQInput.focus();
+    }
+
+    nameNextBtn.addEventListener('click', submitName);
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitName(); });
+    finalQSubmit.addEventListener('click', submitAnswer);
+    finalQInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAnswer(); });
+</script>
+</body>
+</html>
